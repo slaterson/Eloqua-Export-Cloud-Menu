@@ -1,34 +1,21 @@
 <?php
 
-  print "<html><head></head><body>";
   $segment = $_GET["asset"];
   print "Segment id: " . $segment . "<br>";
-#  print "Preparing your data... you might be sent an email when it's ready.";
+#  print "Command: " . $phpExport . "<br>";
+  print "Preparing your data...  you might be sent an email when it's ready.";
 
   include_once ("/var/www/localhost/files/eloqua.inc");
   include_once ("eloquaRequest.php");
 
+#  $segment = $argv[1];
+#  print "Segment id: " . $segment . "<br><br>";
   $login = new EloquaRequest($eloqua_site, $eloqua_userA, $eloqua_pass, "https://login.eloqua.com/id");
   $endPointBase = $login->get("");
   $endPointURL = $endPointBase->urls->base . "/API/bulk/2.0";
   $restEndPointURL = $endPointBase->urls->base . "/API/rest/1.0";
 
-  $restClient = new EloquaRequest($eloqua_site, $eloqua_userA, $eloqua_pass, $restEndPointURL);
-  $response = $restClient->get('/assets/contact/views');
-
-  print "Select the contact view to export:";
-  print "<form name='viewselect' action='./export.php' method='post'>";
-  print "<input type='hidden' name='segment' value='$segment'>";
-  print "<select name='view'>";
-  foreach ($response->elements as $view) {
-    print "<option value='" . $view->id . "'>" . $view->name . "</option>";
-  }
-  print "</select>";
-  print "<input type='submit' value='Export'>";
-  print "</form>";
-  print "</body></html>";
-
-exit;
+#  print "$endPointURL<br>";
 
   $dictionary = (object) array('C_EmailAddress' => '{{Contact.Field(C_EmailAddress)}}',
 			       'C_FirstName' => '{{Contact.Field(C_FirstName)}}',
@@ -47,16 +34,46 @@ exit;
 			   'filter' => "EXISTS('{{ContactSegment[" . $segment . "]}}')",
 			   'fields' => $dictionary);
 
+#  print "Export:<br>";
+#  print_r ($export);
+#  print "<br>";
   $client = new EloquaRequest($eloqua_site, $eloqua_userA, $eloqua_pass, $endPointURL);
   $response = $client->post('/contacts/exports', $export);
   $exportUri = $response->uri;
+#  print "Export result:<br>";
+#  print_r ($response);
+#  print "<br><br>";
 
   $callbackUri = "https://mungkey.org/eloqua/menu/download.php?eu=" . urlencode($response->uri);
 
-  $sync = (object) array('callbackUrl' => $callbackUri,
+  $sync = (object) array(#'status' => 'SyncStatusType.pending',
+			 'callbackUrl' => $callbackUri,
                          'syncedInstanceUri' => $response->uri);
 
+#  print "Sync:<br>";
+#  print_r ($sync);
+#  print "<br><br>";
   $syncSend = $client->POST('/syncs', $sync);
   $syncUri = $syncSend->uri;
+#  print "Sync POST results:<br>";
+#  print_r ($syncSend);
+#  print "<br><br>";
+
+#  for ($i = 0; $i < 10; $i++) {
+#    $syncStatus = $client->GET($syncUri);
+#    print $syncStatus->status . "\n";
+#    if ($syncStatus->status == "pending" or $syncStatus->status == "active" ) {
+#      sleep(1);
+#    } else {
+#      break;
+#    }
+#  }
+#  print "Sync status:<br>";
+#  print_r ($syncStatus);
+#  print "<br><br>";
+
+#  $get_contacts = $client->get($exportUri . "/data");
+#  $export = exec('echo "' . json_encode($get_contacts->items) . '" > /var/www/localhost/htdocs/eloqua/menu/contacts.json');
+#  print $response->uri . "<br>";
 
 ?>
