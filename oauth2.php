@@ -16,7 +16,7 @@
 #  print "code: " . $code . "<br><br>";
   $grantTokens = new grantTokens;
   $grantTokens->grant_type = "authorization_code";
-  $grantTokens->redirect_uri = "https://mungkey.org/eloqua/sfdcAction/oauth2.php";
+  $grantTokens->redirect_uri = "https://mungkey.org/eloqua/menu/oauth2.php";
   $grantTokens->code = $code;
 #  print_r ($grantTokens);
 #  print "<br><br>";
